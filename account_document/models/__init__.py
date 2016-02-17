@@ -7,3 +7,4 @@ from . import account_invoice
 from . import account_invoice_line
 from . import res_partner
 from . import res_company
+from . import account_chart_template

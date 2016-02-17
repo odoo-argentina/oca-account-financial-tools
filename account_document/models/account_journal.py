@@ -51,6 +51,7 @@ class AccountJournal(models.Model):
         'Use Documents?'
         )
     document_sequence_type = fields.Selection(
+        # TODO this field could go in argentina localization
         [('own_sequence', 'Own Sequence'),
             ('same_sequence', 'Same Invoice Sequence')],
         string='Document Sequence Type',
@@ -61,7 +62,8 @@ class AccountJournal(models.Model):
 
     @api.onchange('company_id', 'type')
     def change_company(self):
-        if self.type != 'sale' and self.company_id.localization:
+        # TODO perhups we can use this also in payments
+        if self.type in ['sale', 'purchase'] and self.company_id.localization:
             self.use_documents = True
         else:
             self.use_documents = False
@@ -75,6 +77,14 @@ class AccountJournal(models.Model):
     def update_journal_document_types(self):
         """
         Tricky constraint to create documents on journal.
+        You should not inherit this function, inherit
+        "_update_journal_document_types" instead
+        """
+        return self._update_journal_document_types()
+
+    @api.multi
+    def _update_journal_document_types(self):
+        """
         Function to be inherited by different localizations
         """
         return True
