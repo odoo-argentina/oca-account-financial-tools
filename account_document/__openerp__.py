@@ -23,5 +23,7 @@
     ],
     "demo": [
     ],
+    'images': [
+    ],
     'installable': True,
 }

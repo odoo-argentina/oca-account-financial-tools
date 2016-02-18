@@ -46,22 +46,8 @@ class AccountChartTemplate(models.Model):
             AccountChartTemplate, self)._prepare_all_journals(
             acc_template_ref, company, journals_dict)
 
-        # if chart has localization, then we wan to check if we must
-        # set use documents on journal
+        # if chart has localization, then we use documents by default
         if self.localization:
-            # if sale_use_documents is not in context, then true as default
-            # if 'sale_use_documents' not in self._context:
-            #     sale_use_documents = True
-            # else:
-            #     sale_use_documents = self._context.get(
-            #         'sale_use_documents')
-
-            # # if purchase_use_documents is not in context, then true as default
-            # if 'purchase_use_documents' not in self._context:
-            #     purchase_use_documents = True
-            # else:
-            #     purchase_use_documents = self._context.get(
-            #             'purchase_use_documents', True)
             for vals_journal in journal_data:
                 if vals_journal['type'] == 'sale':
                     vals_journal['use_documents'] = self._context.get(
@@ -70,4 +56,3 @@ class AccountChartTemplate(models.Model):
                     vals_journal['use_documents'] = self._context.get(
                         'purchase_use_documents', True)
         return journal_data
-        # if argentinian chart, we set use_argentinian_localization for company

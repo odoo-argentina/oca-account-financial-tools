@@ -16,6 +16,12 @@ class AccountConfigSettings(models.TransientModel):
         related='chart_template_id.localization'
         )
 
+    @api.onchange('chart_template_id')
+    def account_documentonchange_chart_template(self):
+        if self.chart_template_id.localization:
+            self.sale_use_documents = True
+            self.purchase_use_documents = True
+
     @api.multi
     def set_chart_of_accounts(self):
         """
