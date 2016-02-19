@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from openerp import fields, models, api, _
-from openerp.exceptions import Warning
+from openerp import fields, models, api
+# from openerp.exceptions import UserError
 
 
 class account_move(models.Model):
@@ -38,29 +38,3 @@ class account_move(models.Model):
         else:
             display_name = self.name
         self.display_name = display_name
-
-
-# class account_move_line(models.Model):
-#     _inherit = "account.move.line"
-
-#     @api.one
-#     def name_get(self):
-#         if self.ref:
-#             name = ((self.id, (self.document_number or '')+' ('+self.ref+')'))
-#         else:
-#             name = ((self.id, self.document_number))
-#         return name
-
-#     document_type_id = fields.Many2one(
-#         'account.document.type',
-#         'Document Type',
-#         related='move_id.document_type_id',
-#         store=True,
-#         readonly=True,
-#     )
-#     document_number = fields.Char(
-#         string='Document Number',
-#         related='move_id.document_number',
-#         store=True,
-#         readonly=True,
-#     )

@@ -4,7 +4,7 @@
 # directory
 ##############################################################################
 from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from openerp.exceptions import UserError
 # import openerp.addons.decimal_precision as dp
 # import re
 from openerp.tools.misc import formatLang
@@ -224,7 +224,7 @@ class AccountInvoice(models.Model):
             lambda r: (
                 not r.document_type_id and r.journal_id.use_documents))
         if without_doucument_class:
-            raise Warning(_(
+            raise UserError(_(
                 'Some invoices have a journal that require a document but not '
                 'document type has been selected.\n'
                 'Invoices ids: %s' % without_doucument_class.ids))
@@ -268,7 +268,7 @@ class AccountInvoice(models.Model):
             if invoice.use_documents:
                 if not invoice.document_number:
                     if not invoice.journal_document_type_id.sequence_id:
-                        raise Warning(_(
+                        raise UserError(_(
                             'Error!. Please define sequence on the journal '
                             'related documents to this invoice or set the '
                             'document number.'))

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from openerp import fields, models, api
-# from openerp.exceptions import Warning
+# from openerp.exceptions import UserError
 
 
 class AccountJournalDocumentType(models.Model):
