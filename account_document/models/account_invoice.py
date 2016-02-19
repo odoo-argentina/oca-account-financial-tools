@@ -230,15 +230,6 @@ class AccountInvoice(models.Model):
                 'Invoices ids: %s' % without_doucument_class.ids))
 
     @api.multi
-    def action_move_create(self):
-        """
-        We add currency rate on move creation so it can be used by electronic
-        invoice later on action_number
-        """
-        self.check_use_documents()
-        return super(AccountInvoice, self).action_move_create()
-
-    @api.multi
     def get_localization_invoice_vals(self):
         """
         Function to be inherited by different localizations and add custom
@@ -248,7 +239,17 @@ class AccountInvoice(models.Model):
         return {}
 
     @api.multi
-    def invoice_validate(self):
+    def action_move_create(self):
+        """
+        We add currency rate on move creation so it can be used by electronic
+        invoice later on action_number
+        """
+        self.check_use_documents()
+        self.set_document_data()
+        return super(AccountInvoice, self).action_move_create()
+
+    @api.multi
+    def set_document_data(self):
         """
         If journal document dont have any sequence, then document number
         must be set on the account.invoice and we use thisone
@@ -285,8 +286,7 @@ class AccountInvoice(models.Model):
                     'document_number': document_number,
                     })
             invoice.write(inv_vals)
-        res = super(AccountInvoice, self).invoice_validate()
-        return res
+        return True
 
     @api.multi
     @api.depends('journal_id', 'partner_id', 'company_id')
