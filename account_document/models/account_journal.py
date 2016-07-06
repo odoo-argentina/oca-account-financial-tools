@@ -34,6 +34,9 @@ class AccountJournalDocumentType(models.Model):
     sequence = fields.Integer(
         'Sequence',
         )
+    doc_code_prefix = fields.Char(
+        related='document_type_id.doc_code_prefix'
+    )
 
 
 class AccountJournal(models.Model):
@@ -45,7 +48,7 @@ class AccountJournal(models.Model):
     journal_document_type_ids = fields.One2many(
         'account.journal.document.type',
         'journal_id',
-        'Documents Types',
+        string='Documents Types',
         )
     use_documents = fields.Boolean(
         'Use Documents?'

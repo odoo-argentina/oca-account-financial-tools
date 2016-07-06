@@ -30,7 +30,7 @@ class AccountInvoice(models.Model):
         )
     available_journal_document_type_ids = fields.Many2many(
         'account.journal.document.type',
-        compute='get_available_journal_document_types',
+        compute='get_available_document_types',
         string='Available Journal Document Types',
         )
     journal_document_type_id = fields.Many2one(
@@ -40,13 +40,9 @@ class AccountInvoice(models.Model):
         ondelete='restrict',
         states={'draft': [('readonly', False)]}
         )
-    # we add this fields so we can search, group and analyze by this one
     document_type_id = fields.Many2one(
-        related='journal_document_type_id.document_type_id',
-        copy=False,
-        readonly=True,
-        store=True,
-        )
+        related='journal_document_type_id.document_type_id'
+    )
     document_sequence_id = fields.Many2one(
         related='journal_document_type_id.sequence_id',
         )
@@ -89,12 +85,12 @@ class AccountInvoice(models.Model):
         return res
 
     @api.depends(
-        'amount_untaxed', 'amount_tax', 'tax_line_ids', 'document_type_id')
+        'amount_untaxed', 'amount_tax', 'tax_line_ids', 'journal_document_type_id')
     def _compute_report_amount_and_taxes(self):
         for invoice in self:
             taxes_included = (
-                invoice.document_type_id and
-                invoice.document_type_id.get_taxes_included() or False)
+                invoice.journal_document_type_id and
+                invoice.journal_document_type_id.get_taxes_included() or False)
             if not taxes_included:
                 report_amount_tax = invoice.amount_tax
                 report_amount_untaxed = invoice.amount_untaxed
@@ -187,10 +183,8 @@ class AccountInvoice(models.Model):
         y como con la funcion anterior solo se almacenan solo si se crea desde
         interfaz, hacemos este hack de constraint para computarlos si no estan
         computados"""
-        if (
-                not self.journal_document_type_id and
-                self.available_journal_document_type_ids
-                ):
+        if (not self.journal_document_type_id and
+            self.available_journal_document_type_id):
             self.journal_document_type_id = (
                 self.available_journal_document_type_ids[0])
 
@@ -198,7 +192,7 @@ class AccountInvoice(models.Model):
     @api.depends(
         'move_name',
         'document_number',
-        'document_type_id.doc_code_prefix'
+        'journal_document_type_id.doc_code_prefix'
         )
     def _get_display_name(self):
         """
@@ -206,9 +200,9 @@ class AccountInvoice(models.Model):
         * If document number and document type, we show them
         * Else, we show move_name
         """
-        if self.document_number and self.document_type_id and self.move_name:
+        if self.document_number and self.journal_document_type_id and self.move_name:
             display_name = ("%s%s" % (
-                self.document_type_id.doc_code_prefix or '',
+                self.journal_document_type_id.doc_code_prefix or '',
                 self.document_number))
         else:
             display_name = self.move_name
@@ -222,7 +216,7 @@ class AccountInvoice(models.Model):
         """
         without_doucument_class = self.filtered(
             lambda r: (
-                not r.document_type_id and r.journal_id.use_documents))
+                not r.journal_document_type_id and r.journal_id.use_documents))
         if without_doucument_class:
             raise UserError(_(
                 'Some invoices have a journal that require a document but not '
@@ -263,7 +257,7 @@ class AccountInvoice(models.Model):
         for invoice in self:
             _logger.info(
                 'Setting document data on account.invoice and account.move')
-            journal_document_type = invoice.journal_document_type_id
+            document_type = invoice.journal_document_type_id
             inv_vals = self.get_localization_invoice_vals()
             if invoice.use_documents:
                 if not invoice.document_number:
@@ -273,7 +267,7 @@ class AccountInvoice(models.Model):
                             'related documents to this invoice or set the '
                             'document number.'))
                     document_number = (
-                        journal_document_type.sequence_id.next_by_id())
+                        document_type.sequence_id.next_by_id())
                     inv_vals['document_number'] = document_number
                 # for canelled invoice number that still has a document_number
                 # if validated again we use old document_number
@@ -281,8 +275,8 @@ class AccountInvoice(models.Model):
                 else:
                     document_number = invoice.document_number
                 invoice.move_id.write({
-                    'document_type_id': (
-                        journal_document_type.document_type_id.id),
+                    'journal_document_type_id': (
+                        document_type.document_type_id.id),
                     'document_number': document_number,
                     })
             invoice.write(inv_vals)
@@ -290,32 +284,32 @@ class AccountInvoice(models.Model):
 
     @api.multi
     @api.depends('journal_id', 'partner_id', 'company_id')
-    def get_available_journal_document_types(self):
+    def get_available_document_types(self):
         """
         This function should only be inherited if you need to add another
         "depends", for eg, if you need to add a depend on "new_field" you
         should add:
 
         @api.depends('new_field')
-        def _get_available_journal_document_types(self):
+        def _get_available_document_types(self):
             return super(
-                AccountInvoice, self)._get_available_journal_document_types()
+                AccountInvoice, self)._get_available_document_types()
         """
         for invoice in self:
-            res = self._get_available_journal_document_types()
-            invoice.available_journal_document_type_ids = res[
-                'available_journal_document_types']
-            invoice.journal_document_type_id = res[
-                'journal_document_type']
+            res = self._get_available_document_types()
+            invoice.available_journal_document_type_ids =\
+                res['journal_available_document_types']
+            invoice.journal_document_type_id =\
+                res['journal_document_type']
 
     @api.multi
-    def _get_available_journal_document_types(self):
+    def _get_available_document_types(self):
         """
         This function is to be inherited by differents localizations and MUST
         return a dictionary with two keys:
-        * 'available_journal_document_types': available document types on
+        * 'available_document_types': available document types on
         this invoice
-        * 'journal_document_type': suggested document type on this invoice
+        * 'document_type': suggested document type on this invoice
         """
         self.ensure_one()
         # As default we return every journal document type, and if one exists
@@ -325,6 +319,6 @@ class AccountInvoice(models.Model):
             journal_document_types and journal_document_types[0] or
             journal_document_types)
         return {
-            'available_journal_document_types': journal_document_types,
+            'journal_available_document_types': journal_document_types,
             'journal_document_type': journal_document_type,
             }

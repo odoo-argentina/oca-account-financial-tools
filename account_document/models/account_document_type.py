@@ -64,6 +64,7 @@ class AccountDocmentType(models.Model):
         # loaded on sales journals. Also can be selected on partners, to be \
         # available it must be selected on partner.\'
         )
+    sequence_id = fields.Many2one('ir.sequence')
     active = fields.Boolean(
         'Active',
         default=True

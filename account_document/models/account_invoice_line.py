@@ -27,13 +27,14 @@ class account_invoice_line(models.Model):
         )
 
     @api.multi
-    @api.depends('price_unit', 'price_subtotal', 'invoice_id.document_type_id')
+    @api.depends('price_unit', 'price_subtotal',
+                 'invoice_id.journal_document_type_id')
     def _compute_report_prices_and_taxes(self):
         for line in self:
             invoice = line.invoice_id
             taxes_included = (
-                invoice.document_type_id and
-                invoice.document_type_id.get_taxes_included() or False)
+                invoice.journal_document_type_id and
+                invoice.journal_document_type_id.get_taxes_included() or False)
             if not taxes_included:
                 report_price_unit = line.price_unit
                 report_price_subtotal = line.price_subtotal
